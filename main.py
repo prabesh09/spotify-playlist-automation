@@ -22,8 +22,13 @@ def authenticate_spotify():
 
 def add_song_to_playlist(sp, playlist_id, track_id):
     try:
-        sp.playlist_add_items(playlist_id, [f'spotify:track:{track_id}'])
-        logging.info("Song added successfully to the playlist.")
+        current_tracks = sp.playlist_tracks(playlist_id)
+        current_track_ids = [item['track']['id'] for item in current_tracks['items']]
+        if track_id not in current_track_ids:
+            sp.playlist_add_items(playlist_id, [track_id])
+            logging.info("Song added successfully to the playlist.")
+        else:
+            logging.info("Song is already in the playlist. Skipping addition.")
     except Exception as e:
         logging.error(f"Failed to add song to playlist: {e}")
 
@@ -35,7 +40,6 @@ def read_songs_from_file(file_path):
     except Exception as e:
         logging.error(f"Failed to read songs from file: {e}")
         return []
-
 
 sp = authenticate_spotify()
 
@@ -52,7 +56,7 @@ for song in songs:
     if results['tracks']['items']:
         track = results['tracks']['items'][0]
         track_id = track['id']
-        sp.playlist_add_items(playlist_id, [track_id])
+        add_song_to_playlist(sp, playlist_id, track_id)
         print(f"Song '{song}' added to the playlist.")
     else:
         print(f"Song '{song}' not found.")
